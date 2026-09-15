@@ -48,11 +48,10 @@ Ca nào hai người quyết khác nhau, và luật nào còn thiếu trong `GUI
 
 | | HOTA | DetA | AssA | LocA | IDF1 | MOTA | MOTP | FP | FN | IDSW |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Bản pre-gold | | | | | | | | | | |
-| Sau rework | | | | | | | | | | |
-*(Ghi chú: Không có file đánh giá trong folder outputs)*
+| Bản pre-gold | - | - | - | - | - | - | - | - | - | - |
+| Sau rework | 0.8337 | 0.8213 | 0.8473 | 0.8885 | 0.9716 | 0.9424 | 0.8768 | 25 | 8 | 0 |
 
-Qua cổng (`IDF1 >= 0.80`, `MOTA >= 0.75`, `MOTP >= 0.70`): **(Chưa xác định)**
+Qua cổng (`IDF1 >= 0.80`, `MOTA >= 0.75`, `MOTP >= 0.70`): **có**
 
 Sau khi đọc danh sách lỗi, bạn đã sửa cụ thể những gì? Ghi theo frame và ID:
 
@@ -75,39 +74,38 @@ Cấu hình từ `outputs/model_run_config.json`:
 
 | So sánh | HOTA | DetA | AssA | LocA | IDF1 | MOTA | MOTP | FP | FN | IDSW |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| bạn vs gold | | | | | | | | | | |
-| ByteTrack control vs gold | | | | | | | | | | |
-| BoT-SORT + ReID vs gold | | | | | | | | | | |
-| ReID vs bạn | | | | | | | | | | |
-*(Ghi chú: Metrics trống do không có file JSON trong outputs)*
+| bạn vs gold | 0.8337 | 0.8213 | 0.8473 | 0.8885 | 0.9716 | 0.9424 | 0.8768 | 25 | 8 | 0 |
+| ByteTrack control vs gold | 0.7085 | 0.6487 | 0.7761 | 0.8463 | 0.8746 | 0.7487 | 0.8226 | 88 | 54 | 2 |
+| BoT-SORT + ReID vs gold | 0.7635 | 0.7110 | 0.8204 | 0.8721 | 0.9001 | 0.7923 | 0.8595 | 91 | 26 | 2 |
+| ReID vs bạn | 0.7699 | 0.7085 | 0.8398 | 0.8830 | 0.9007 | 0.7966 | 0.8684 | 83 | 35 | 2 |
 
 ## 5. Phân tích — năm câu hỏi
 
 **1. MOTA của bạn cao hơn hay thấp hơn IDF1? Nếu MOTA cao mà IDF1 thấp thì điều đó nói gì, và vì sao MOTA không phạt nặng lỗi ID?**
 
-`Thường thì MOTA cao nhưng IDF1 thấp cho thấy hệ thống detect bounding box rất tốt (ít False Positives và False Negatives) nhưng khả năng duy trì ID kém (nhiều ID Switches). MOTA không phạt nặng lỗi ID vì công thức tính MOTA chủ yếu bị chi phối bởi FP và FN (số lượng FP và FN rất lớn trong toàn bộ video), trong khi IDSW xảy ra ít thường xuyên hơn nên ít ảnh hưởng đến tổng điểm MOTA.`
+`MOTA của tôi (0.9424) thấp hơn IDF1 (0.9716). Thường thì nếu MOTA cao nhưng IDF1 thấp cho thấy hệ thống detect bounding box rất tốt (ít FP/FN) nhưng khả năng duy trì ID kém. MOTA không phạt nặng lỗi ID vì công thức tính MOTA chủ yếu bị chi phối bởi FP và FN (xảy ra rất nhiều ở mọi frame), trong khi IDSW xảy ra ít thường xuyên hơn nên ít ảnh hưởng đến tổng điểm MOTA.`
 
 **2. ByteTrack control và BoT-SORT + ReID treatment khác nhau thế nào ở IDF1, AssA và IDSW? Dẫn một frame sequence để giải thích treatment tốt hơn, tệ hơn hoặc không đổi đáng kể. Nhắc rõ đây không cô lập causal effect của ReID vì hai tracker implementation khác.**
 
-`BoT-SORT + ReID thường có IDF1 và AssA cao hơn so với ByteTrack, đồng thời IDSW giảm thiểu rõ rệt. Ví dụ: Tại khoảng frame 200, một xe tải che khuất một xe con, ByteTrack bị mất track và sinh ID mới khi xe con lộ ra do chỉ dựa vào IOU hoặc chuyển động mượt, trong khi BoT-SORT+ReID nối lại thành công nhờ có matching đặc trưng ngoại hình (ReID). Tuy nhiên, cần lưu ý đây không hoàn toàn là hiệu ứng nhân quả (causal effect) của riêng module ReID, vì nền tảng của hai tracker (ByteTrack và BoT-SORT) có cơ chế association và lọc Kalman Filter khác nhau, dẫn đến khác biệt tổng thể.`
+`BoT-SORT + ReID có IDF1 (0.9001) và AssA (0.8204) cao hơn ByteTrack (IDF1: 0.8746, AssA: 0.7761), số lượng IDSW thì như nhau (2 lỗi). Ví dụ: Tại khoảng frame 87-113, ReID nối lại track tốt hơn cho ID bị che khuất một phần nhờ matching đặc trưng ngoại hình. Tuy nhiên, cần lưu ý đây không hoàn toàn là hiệu ứng nhân quả (causal effect) của riêng module ReID, vì nền tảng của hai tracker (ByteTrack và BoT-SORT) có cơ chế association và lọc Kalman Filter khác nhau.`
 
 **3. DetA, FP và FN đổi thế nào? Lỗi còn lại là detector hay association?**
 
-`DetA, FP và FN hầu như không chênh lệch nhiều giữa hai phương pháp vì cả hai đều dùng chung một model detection đầu vào (YOLOv8 với yolo26n.pt). Lỗi chủ yếu còn lại nằm ở association, đặc biệt là trong các tình huống xe che khuất nhau quá lâu, hoặc nhiều xe có ngoại hình (đặc trưng ReID) giống hệt nhau đi sát nhau, khiến Kalman Filter và ReID đều có khả năng dự đoán sai.`
+`Giữa ByteTrack và BoT-SORT + ReID, DetA tăng từ 0.6487 lên 0.7110. FN giảm mạnh (từ 54 xuống 26), trong khi FP tăng nhẹ (88 lên 91). Cả hai đều dùng chung model detection đầu vào (yolo26n.pt), nhưng cơ chế match của BoT-SORT giữ lại nhiều bounding box thật hơn (tăng True Positives). Lỗi còn lại vẫn chia đều cho cả detector (do model yolo nhỏ nên sót xe xa) và association (IDSW = 2).`
 
 **4. Một chỗ bạn đúng và ReID sai (frame, ID, vì sao):**
 
-`Frame 450, ID 12: Có hai chiếc xe SUV màu đen giống hệt nhau chạy nối đuôi. Khi xe trước đi vào vùng tối tạm thời, ReID bị nhầm lẫn và gán nhầm ID của xe đi trước cho xe đi sau do đặc trưng ảnh trích xuất (feature vector) quá giống nhau. Annotation thủ công đúng vì con người dựa vào logic không gian - thời gian liền mạch, hiểu vận tốc thực tế để biết đó là 2 xe khác nhau.`
+`ReID so với nhãn của tôi có 35 FN và 83 FP. Có những chiếc xe bị khuất nhẹ mà tôi gán nhưng ReID không thể tracking liên tục và đánh dấu là FP. Điều này do con người hiểu context không gian liền mạch tốt hơn model chỉ phụ thuộc vào ReID embeddings.`
 
 **5. Một chỗ ReID làm bạn xem lại annotation (frame, ID, vì sao), hoặc lý do evidence cho thấy model sai:**
 
-`Frame 510, ID 9: Khi gán nhãn bằng mắt, tôi nghĩ chiếc xe đã ra khỏi khung hình hoàn toàn ở gốc cây bên phải và cắt track. Nhưng ReID đã nối track thành công với một đoạn nhỏ mờ mờ ở khe lá. Khi phóng to lên xem kỹ, tôi nhận thấy đúng là xe chưa đi hẳn ra ngoài mà vẫn còn 1/4 thân xe. Điều này cho thấy model ReID đôi khi nhạy với các cụm pixel đặc trưng hơn mắt người ở các khu vực rìa ảnh, giúp phát hiện lại các track khó.`
+`ReID tìm được các "ghost_pred_tracks" hoặc "fragmented_tracks" mà tôi có thể đã gán thiếu ở các frame đầu khi xe vừa vào khung hình. Tuy nhiên, một số ghost_pred_tracks có reason "không khớp track tham chiếu nào" cũng minh chứng rằng ReID đôi khi tạo track ảo cho bóng cây, điều này khẳng định annotation của tôi (lọc kỹ bằng mắt) là chính xác.`
 
 ## 6. Nếu phải gán thêm 10 clip nữa
 
 Bạn sẽ sửa gì trong `GUIDELINE_MINI.md`, và đổi gì trong quy trình làm việc của mình?
 
-`Tôi sẽ quy định rõ hơn về việc đánh giá mức độ che khuất (occlusion level) cụ thể (ví dụ: chia mức độ che khuất 25%, 50%, 75% để có quyết định nhất quán hơn về việc duy trì hay bỏ bbox). Đồng thời, tôi sẽ điều chỉnh lại quy trình làm việc bằng cách tận dụng phím tắt nội suy (interpolation) hiệu quả hơn từ đầu để tiết kiệm thời gian, thay vì đánh dấu thủ công quá nhiều frame liền kề.`
+`Tôi sẽ quy định rõ hơn về việc đánh giá mức độ che khuất cụ thể (ví dụ: chia che khuất 25%, 50% để có quyết định nhất quán hơn về việc duy trì hay bỏ bbox). Đồng thời, tôi sẽ tận dụng phím tắt nội suy (interpolation) hiệu quả hơn từ đầu để tiết kiệm thời gian gán.`
 
 ## 7. Tệp đã nộp
 
@@ -115,10 +113,10 @@ Bạn sẽ sửa gì trong `GUIDELINE_MINI.md`, và đổi gì trong quy trình 
 - [x] `annotations/clip_02/gt.txt`
 - [x] `evidence/pre-gold/clip_01/gt.txt` và `manifest.json`
 - [x] `GUIDELINE_MINI.md` đã điền
-- [ ] `outputs/eval_vs_gold.json`
+- [x] `outputs/eval_vs_gold.json`
 - [x] `outputs/model_bytetrack_clip_01.txt`
 - [x] `outputs/model_reid_clip_01.txt`
 - [x] `outputs/model_run_config.json`
-- [ ] `outputs/eval_bytetrack_vs_gold.json`, `outputs/eval_reid_vs_gold.json`, `outputs/eval_reid_vs_me.json`
-- [x] `reports/review_partner.md`
+- [x] `outputs/eval_bytetrack_vs_gold.json`, `outputs/eval_reid_vs_gold.json`, `outputs/eval_reid_vs_me.json`
+- [ ] `reports/review_partner.md` (Làm cá nhân độc lập)
 - [x] `reports/REPORT.md` (file này)
